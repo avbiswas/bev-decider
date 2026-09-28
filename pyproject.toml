@@ -1,0 +1,45 @@
+[project]
+name = "bev-decider"
+version = "0.1.0"
+description = "bev-decider: a 0.4B System One decision model with typed, calibrated, choice-order-invariant answers"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Avishek Biswas" }]
+keywords = ["decision-model", "system-one", "classification", "calibration", "jev", "qwen"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.4",
+    "transformers>=4.56",
+    "peft>=0.14",
+    "safetensors",
+    "huggingface_hub",
+]
+
+[project.optional-dependencies]
+serve = ["fastapi>=0.110", "uvicorn>=0.29"]
+
+[project.scripts]
+bev-decider = "bev_decider.cli:main"
+
+[project.urls]
+Model = "https://huggingface.co/avbiswas/bev-decider-0.4B"
+
+[dependency-groups]
+dev = ["pytest", "httpx", "fastapi", "uvicorn"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "LICENSE", "pyproject.toml"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bev_decider"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
