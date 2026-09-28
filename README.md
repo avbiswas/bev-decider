@@ -3,7 +3,7 @@
 Run [**bev-decider-0.4B**](https://huggingface.co/avbiswas/bev-decider-0.4B), a 0.4B-parameter System One decision model. It reads a state (text or JSON) and typed questions about it, and returns calibrated probabilities in a single forward pass. It uses TypeSafe Jev's question and answer format, so a local server can stand in for the `/v1/systemone` API.
 
 - **0.4B parameters.** It runs on a laptop CPU, Apple Silicon or any GPU.
-- **Choice-order invariant.** Options are read in parallel from the same position, so reordering them cannot change the answer.
+- **Choice-order invariant.** Every option starts at the same position id and is read in parallel, so reordering the options cannot change the answer, and there is no bias toward the first or last option. Inside the backbone, the attention mask lets each option's tokens see only the question and their own earlier tokens, never another option. Each option's embedding then goes through a small, newly trained self-attention head, which is where the options are compared with each other. That head has no position information either, so the whole model is order invariant. This is exact in fp32: over 960 random shuffles of 3–12 options, no probability moved by more than 1e-5. On GPU or Apple Silicon the default bf16 inference adds rounding noise (about 0.001 typical), which can only flip near-ties.
 - **Typed answers:** `choice` (a key and probabilities), `noul` (P(yes)) and `score` (an expected level and probabilities).
 
 See the [model card](https://huggingface.co/avbiswas/bev-decider-0.4B) for benchmarks and known weaknesses.
