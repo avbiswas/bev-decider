@@ -23,14 +23,16 @@ def default_device():
 
 
 class Decider:
-    def __init__(self, network, encoder, config, device, name):
+    def __init__(self, network, encoder, config, device, name, precision="bf16"):
         self.network, self.encoder, self.config, self.device, self.name = network, encoder, config, device, name
+        self.precision = precision
 
     @torch.no_grad()
     def probabilities(self, examples):
         batch = {k: v.to(self.device) for k, v in self.encoder.collate(examples).items()}
-        # bf16 on GPU / Apple Silicon (as in training); fp32 on CPU
-        with torch.autocast(self.device.type, dtype=torch.bfloat16, enabled=self.device.type in ("cuda", "mps")):
+        # bf16 autocast on GPU / Apple Silicon (as in training); the CPU always runs fp32
+        use_bf16 = self.precision == "bf16" and self.device.type in ("cuda", "mps")
+        with torch.autocast(self.device.type, dtype=torch.bfloat16, enabled=use_bf16):
             logits = self.network(**batch)
         return torch.softmax(logits.float(), dim=-1).cpu()
 
@@ -64,12 +66,18 @@ class Decider:
         return answers
 
 
-def load(model=DEFAULT_MODEL, revision=None, device=None, max_state_tokens=None):
+def load(model=DEFAULT_MODEL, revision=None, device=None, max_state_tokens=None, precision="bf16"):
     """Loads bev-decider from a Hub repo id or a local folder.
 
     The folder is self-contained: model.safetensors (backbone + head), backbone_config.json, config.json and the
     tokenizer files. Nothing else is downloaded.
+
+    precision: "bf16" (default) runs inference under bf16 autocast on CUDA / Apple Silicon, which is faster but adds
+    rounding noise of about 0.001 to probabilities; "fp32" is exact, so reordering options never changes the output.
+    The CPU always runs fp32.
     """
+    if precision not in ("bf16", "fp32"):
+        raise ValueError(f"precision must be 'bf16' or 'fp32', not {precision!r}")
     path = Path(model) if Path(model).is_dir() else Path(snapshot_download(model, revision=revision))
     config = json.loads((path / "config.json").read_text())
     device = torch.device(device) if device else default_device()
@@ -84,4 +92,4 @@ def load(model=DEFAULT_MODEL, revision=None, device=None, max_state_tokens=None)
 
     tokenizer = Qwen2Tokenizer.from_pretrained(path)
     encoder = Encoder(tokenizer, max_state_tokens or config["max_state_tokens"], config["max_choice_tokens"])
-    return Decider(network, encoder, config, device, name=str(model))
+    return Decider(network, encoder, config, device, name=str(model), precision=precision)

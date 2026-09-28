@@ -80,3 +80,29 @@ def test_server(decider):
     assert answers["intent"]["choice"] == direct["intent"]["choice"]
     assert answers["urgent"]["noul"] == pytest.approx(direct["urgent"]["noul"], abs=1e-6)
     assert client.post("/v1/systemone", json={"state": "x", "questions": {"q": {"type": "bad"}}}).status_code == 400
+
+
+def _accelerator():
+    import torch
+    return "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else None
+
+
+@pytest.mark.skipif(_accelerator() is None, reason="needs CUDA or Apple Silicon")
+def test_fp32_precision_is_order_invariant_on_accelerator():
+    import random
+    exact = load(revision=CASES["model_revision"], device=_accelerator(), precision="fp32")
+    rng = random.Random(0)
+    for case in [c for c in CASES["cases"] if c["question"]["type"] == "choice" and len(c["question"]["criteria"]) >= 3][:8]:
+        q = case["question"]
+        base = exact.decide(case["state"], {"q": q})["q"]["probabilities"]
+        items = list(q["criteria"].items())
+        for _ in range(4):
+            rng.shuffle(items)
+            shuffled = exact.decide(case["state"], {"q": {**q, "criteria": dict(items)}})["q"]["probabilities"]
+            for key, p in base.items():
+                assert shuffled[key] == pytest.approx(p, abs=1e-5)
+
+
+def test_invalid_precision():
+    with pytest.raises(ValueError):
+        load(precision="fp16")

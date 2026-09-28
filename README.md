@@ -3,7 +3,7 @@
 Run [**bev-decider-0.4B**](https://huggingface.co/avbiswas/bev-decider-0.4B), a 0.4B-parameter System One decision model. It reads a state (text or JSON) and typed questions about it, and returns calibrated probabilities in a single forward pass. It uses TypeSafe Jev's question and answer format, so a local server can stand in for the `/v1/systemone` API.
 
 - **0.4B parameters.** It runs on a laptop CPU, Apple Silicon or any GPU.
-- **Choice-order invariant.** Every option starts at the same position id and is read in parallel, so reordering the options cannot change the answer, and there is no bias toward the first or last option. Inside the backbone, the attention mask lets each option's tokens see only the question and their own earlier tokens, never another option. Each option's embedding then goes through a small, newly trained self-attention head, which is where the options are compared with each other. That head has no position information either, so the whole model is order invariant. This is exact in fp32: over 960 random shuffles of 3–12 options, no probability moved by more than 1e-5. On GPU or Apple Silicon the default bf16 inference adds rounding noise (about 0.001 typical), which can only flip near-ties.
+- **Choice-order invariant.** Every option starts at the same position id and is read in parallel, so reordering the options cannot change the answer, and there is no bias toward the first or last option. Inside the backbone, the attention mask lets each option's tokens see only the question and their own earlier tokens, never another option. Each option's embedding then goes through a small, newly trained self-attention head, which is where the options are compared with each other. That head has no position information either, so the whole model is order invariant. This is exact in fp32: over 960 random shuffles of 3–12 options, no probability moved by more than 1e-5. On GPU or Apple Silicon the default bf16 inference adds rounding noise (about 0.001 typical), which can flip near-ties. **If you need perfect order invariance, load with `precision="fp32"`.**
 - **Typed answers:** `choice` (a key and probabilities), `noul` (P(yes)) and `score` (an expected level and probabilities).
 
 See the [model card](https://huggingface.co/avbiswas/bev-decider-0.4B) for benchmarks and known weaknesses.
@@ -73,7 +73,7 @@ Output:
 }
 ```
 
-To choose a device, pass `load(device="cpu")`, `"mps"` or `"cuda"`.
+To choose a device, pass `load(device="cpu")`, `"mps"` or `"cuda"`. On GPU and Apple Silicon, inference runs in bf16 by default for speed; pass `load(precision="fp32")` for exact probabilities and perfect option-order invariance (the CPU always runs fp32).
 
 Question types:
 
@@ -88,7 +88,7 @@ Questions about the same state are batched together. States longer than 2,048 to
 ## Server
 
 ```bash
-bev-decider serve --port 8008
+bev-decider serve --port 8008          # add --precision fp32 for exact results
 curl -s localhost:8008/v1/systemone -H 'content-type: application/json' -d '{
   "state": "Order 1182 arrived with a cracked screen.",
   "questions": {

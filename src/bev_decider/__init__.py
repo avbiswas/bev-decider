@@ -3,4 +3,4 @@
 from .decider import DEFAULT_MODEL, Decider, load
 
 __all__ = ["DEFAULT_MODEL", "Decider", "load"]
-__version__ = "0.2.0"
+__version__ = "0.2.1"

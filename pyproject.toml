@@ -1,6 +1,6 @@
 [project]
 name = "bev-decider"
-version = "0.2.0"
+version = "0.2.1"
 description = "bev-decider: a 0.4B System One decision model with typed, calibrated, choice-order-invariant answers"
 readme = "README.md"
 license = "Apache-2.0"
