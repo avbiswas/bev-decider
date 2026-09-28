@@ -4,7 +4,6 @@ import math
 
 import torch
 import torch.nn as nn
-from transformers import Qwen3Model
 
 
 class SelfAttention(nn.Module):
@@ -81,8 +80,3 @@ class DeciderNetwork(nn.Module):
         # The head always runs in fp32, as in training
         with torch.autocast(device_type=hidden.device.type, enabled=False):
             return self.head(choice_embeddings, answer_embedding, choice_mask, task_type)
-
-
-def load_backbone(model_name, num_layers, revision=None):
-    # Only the first num_layers decoder layers are built and loaded; the rest are never executed
-    return Qwen3Model.from_pretrained(model_name, revision=revision, dtype=torch.float32, num_hidden_layers=num_layers)

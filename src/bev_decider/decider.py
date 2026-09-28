@@ -5,12 +5,11 @@ from pathlib import Path
 
 import torch
 from huggingface_hub import snapshot_download
-from peft import PeftModel
 from safetensors.torch import load_file
-from transformers import AutoTokenizer
+from transformers import Qwen2Tokenizer, Qwen3Config, Qwen3Model
 
 from .encode import Encoder
-from .model import ChoiceHead, DeciderNetwork, load_backbone
+from .model import ChoiceHead, DeciderNetwork
 
 DEFAULT_MODEL = "avbiswas/bev-decider-0.4B"
 
@@ -66,17 +65,23 @@ class Decider:
 
 
 def load(model=DEFAULT_MODEL, revision=None, device=None, max_state_tokens=None):
-    """Loads bev-decider from a Hub repo id or a local folder (config.json, adapter, head.safetensors)."""
+    """Loads bev-decider from a Hub repo id or a local folder.
+
+    The folder is self-contained: model.safetensors (backbone + head), backbone_config.json, config.json and the
+    tokenizer files. Nothing else is downloaded.
+    """
     path = Path(model) if Path(model).is_dir() else Path(snapshot_download(model, revision=revision))
     config = json.loads((path / "config.json").read_text())
     device = torch.device(device) if device else default_device()
 
-    backbone = load_backbone(config["base_model"], config["num_layers"], config.get("base_revision"))
-    backbone = PeftModel.from_pretrained(backbone, path)
+    weights = load_file(path / "model.safetensors")
+    backbone = Qwen3Model(Qwen3Config.from_pretrained(path / config["backbone_config"]))
+    backbone.load_state_dict({k[len("backbone."):]: v.float() for k, v in weights.items() if k.startswith("backbone.")})
     head = ChoiceHead(hidden_dim=backbone.config.hidden_size, **config["head"])
-    head.load_state_dict(load_file(path / "head.safetensors"))
-    network = DeciderNetwork(backbone, head).to(device).eval()
+    head.load_state_dict({k[len("head."):]: v.float() for k, v in weights.items() if k.startswith("head.")})
+    # Weights are kept in fp32; on GPU / Apple Silicon inference runs under bf16 autocast, as in training
+    network = DeciderNetwork(backbone.float(), head).to(device).eval()
 
-    tokenizer = AutoTokenizer.from_pretrained(config["base_model"], revision=config.get("base_revision"))
+    tokenizer = Qwen2Tokenizer.from_pretrained(path)
     encoder = Encoder(tokenizer, max_state_tokens or config["max_state_tokens"], config["max_choice_tokens"])
     return Decider(network, encoder, config, device, name=str(model))

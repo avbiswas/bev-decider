@@ -31,7 +31,7 @@ def create_app(decider: Decider) -> FastAPI:
     @app.get("/v1/models")
     def models():
         return {"models": [{"name": MODEL_NAME, "source": decider.name, "device": str(decider.device),
-                            "base": decider.config["base_model"], "max_state_tokens": decider.encoder.max_state_tokens}]}
+                            "version": decider.config.get("version"), "max_state_tokens": decider.encoder.max_state_tokens}]}
 
     @app.post("/v1/systemone")
     def systemone(req: Request, response: Response):

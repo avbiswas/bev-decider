@@ -15,7 +15,7 @@ pip install bev-decider            # library
 pip install "bev-decider[serve]"   # + local /v1/systemone server
 ```
 
-The weights (about 35 MB) and the base `Qwen/Qwen3-0.6B` are downloaded from the Hugging Face Hub on first use.
+The model is a single ~1 GB file, downloaded from the Hugging Face Hub on first use.
 
 ## Python
 
@@ -111,7 +111,7 @@ echo '{"state": "...", "questions": {...}}' | bev-decider decide
 uv run pytest
 ```
 
-The tests check that the package reproduces the probabilities of the released checkpoint on 50 fixed questions, in fp32 on CPU. They also check that answers do not depend on option order and that the server works.
+The tests check that the package reproduces the released model's probabilities on 50 fixed questions on CPU, and that they stay within 0.02 of the training checkpoint. They also check that answers do not depend on option order and that the server works.
 
 ## License
 

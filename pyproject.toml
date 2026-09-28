@@ -1,6 +1,6 @@
 [project]
 name = "bev-decider"
-version = "0.1.0"
+version = "0.2.0"
 description = "bev-decider: a 0.4B System One decision model with typed, calibrated, choice-order-invariant answers"
 readme = "README.md"
 license = "Apache-2.0"
@@ -17,7 +17,6 @@ requires-python = ">=3.10"
 dependencies = [
     "torch>=2.4",
     "transformers>=4.56",
-    "peft>=0.14",
     "safetensors",
     "huggingface_hub",
 ]
@@ -30,6 +29,7 @@ bev-decider = "bev_decider.cli:main"
 
 [project.urls]
 Model = "https://huggingface.co/avbiswas/bev-decider-0.4B"
+Repository = "https://github.com/avbiswas/bev-decider"
 
 [dependency-groups]
 dev = ["pytest", "httpx", "fastapi", "uvicorn"]

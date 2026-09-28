@@ -1,7 +1,9 @@
-"""The package must reproduce the training code's probabilities for the released weights.
+"""The package must reproduce the released model's probabilities, and stay close to the training checkpoint.
 
-parity_cases.json holds 50 questions (choice / noul / score, text and JSON states, 4 states over 6,000 characters)
-with the probabilities the training code produced in fp32 on CPU. Tests download the model on first run.
+parity_cases.json holds 50 questions (choice / noul / score, text and JSON states, 4 states over 6,000 characters).
+expected_probabilities come from the released single-file model on CPU; training_probabilities come from the training
+code for the checkpoint it was built from (fp32 weights, LoRA not merged). Merging the LoRA and storing the backbone in
+bf16 moves probabilities by at most ~0.01. Tests download the model on first run.
 """
 
 import json
@@ -28,6 +30,15 @@ def test_parity(decider, i):
     case = CASES["cases"][i]
     answer = decider.decide(case["state"], {"q": case["question"]})["q"]
     assert probs(answer) == pytest.approx(case["expected_probabilities"], abs=1e-4)
+
+
+@pytest.mark.parametrize("i", range(len(CASES["cases"])))
+def test_close_to_training_checkpoint(decider, i):
+    case = CASES["cases"][i]
+    p = probs(decider.decide(case["state"], {"q": case["question"]})["q"])
+    t = case["training_probabilities"]
+    assert p == pytest.approx(t, abs=0.02)
+    assert p.index(max(p)) == t.index(max(t))
 
 
 def test_batched_equals_single(decider):
