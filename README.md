@@ -22,26 +22,58 @@ The weights (about 35 MB) and the base `Qwen/Qwen3-0.6B` are downloaded from the
 ```python
 from bev_decider import load
 
-decider = load()  # avbiswas/bev-decider-0.4B; pass device="cpu" | "mps" | "cuda" to override
+decider = load()  # downloads avbiswas/bev-decider-0.4B
 
-answers = decider.decide(
-    state={"message": "URGENT: you charged my card twice this month. Refund the duplicate within 24 hours or I'm disputing it with my bank."},
-    questions={
-        "intent": {"type": "choice", "instructions": "What does the customer want?",
-                   "criteria": {"refund": "money returned or a duplicate charge reversed",
-                                "technical_help": "a bug, outage or integration problem",
-                                "cancellation": "wants to cancel or downgrade"}},
-        "urgent": {"type": "noul", "instructions": "Does the message communicate time pressure or a deadline?"},
-        "anger": {"type": "score", "instructions": "How angry is the customer?",
-                  "criteria": ["calm", "mildly annoyed", "frustrated", "furious"]},
+state = {
+    "message": (
+        "URGENT: you charged my card twice this month. "
+        "Refund the duplicate within 24 hours or I'm disputing it with my bank."
+    )
+}
+
+questions = {
+    "intent": {
+        "type": "choice",
+        "instructions": "What does the customer want?",
+        "criteria": {
+            "refund": "money returned or a duplicate charge reversed",
+            "technical_help": "a bug, outage or integration problem",
+            "cancellation": "wants to cancel or downgrade",
+        },
     },
-)
-# {"intent": {"type": "choice", "choice": "refund",
-#             "probabilities": {"refund": 1.0, "technical_help": 0.0, "cancellation": 0.0}},
-#  "urgent": {"type": "noul", "noul": 0.99},
-#  "anger":  {"type": "score", "score": 1.88,
-#             "probabilities": {"0": 0.09, "1": 0.10, "2": 0.64, "3": 0.16}}}
+    "urgent": {
+        "type": "noul",
+        "instructions": "Does the message communicate time pressure or a deadline?",
+    },
+    "anger": {
+        "type": "score",
+        "instructions": "How angry is the customer?",
+        "criteria": ["calm", "mildly annoyed", "frustrated", "furious"],
+    },
+}
+
+answers = decider.decide(state, questions)
 ```
+
+Output:
+
+```json
+{
+  "intent": {
+    "type": "choice",
+    "choice": "refund",
+    "probabilities": {"refund": 1.0, "technical_help": 0.0, "cancellation": 0.0}
+  },
+  "urgent": {"type": "noul", "noul": 0.99},
+  "anger": {
+    "type": "score",
+    "score": 1.88,
+    "probabilities": {"0": 0.09, "1": 0.10, "2": 0.64, "3": 0.16}
+  }
+}
+```
+
+To choose a device, pass `load(device="cpu")`, `"mps"` or `"cuda"`.
 
 Question types:
 
