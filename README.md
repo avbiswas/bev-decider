@@ -67,8 +67,8 @@ Output:
   "urgent": {"type": "noul", "noul": 0.99},
   "anger": {
     "type": "score",
-    "score": 1.88,
-    "probabilities": {"0": 0.09, "1": 0.10, "2": 0.64, "3": 0.16}
+    "score": 1.90,
+    "probabilities": {"0": 0.09, "1": 0.10, "2": 0.65, "3": 0.17}
   }
 }
 ```
