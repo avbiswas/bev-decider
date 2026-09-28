@@ -25,7 +25,7 @@ from bev_decider import load
 decider = load()  # avbiswas/bev-decider-0.4B; pass device="cpu" | "mps" | "cuda" to override
 
 answers = decider.decide(
-    state={"message": "Hi, we were billed twice for March. Please refund the duplicate today or we will cancel."},
+    state={"message": "URGENT: you charged my card twice this month. Refund the duplicate within 24 hours or I'm disputing it with my bank."},
     questions={
         "intent": {"type": "choice", "instructions": "What does the customer want?",
                    "criteria": {"refund": "money returned or a duplicate charge reversed",
@@ -37,10 +37,10 @@ answers = decider.decide(
     },
 )
 # {"intent": {"type": "choice", "choice": "refund",
-#             "probabilities": {"refund": 0.996, "technical_help": 0.000006, "cancellation": 0.0045}},
-#  "urgent": {"type": "noul", "noul": 0.19},
-#  "anger":  {"type": "score", "score": 0.88,
-#             "probabilities": {"0": 0.45, "1": 0.25, "2": 0.27, "3": 0.03}}}
+#             "probabilities": {"refund": 1.0, "technical_help": 0.0, "cancellation": 0.0}},
+#  "urgent": {"type": "noul", "noul": 0.99},
+#  "anger":  {"type": "score", "score": 1.88,
+#             "probabilities": {"0": 0.09, "1": 0.10, "2": 0.64, "3": 0.16}}}
 ```
 
 Question types:
