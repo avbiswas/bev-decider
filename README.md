@@ -91,7 +91,9 @@ Questions about the same state are batched together. States longer than 2,048 to
 bev-decider serve --port 8008
 curl -s localhost:8008/v1/systemone -H 'content-type: application/json' -d '{
   "state": "Order 1182 arrived with a cracked screen.",
-  "questions": {"damaged": {"type": "noul", "instructions": "Was the item damaged on arrival?"}}
+  "questions": {
+    "damaged": {"type": "noul", "instructions": "Was the item damaged on arrival?"}
+  }
 }'
 ```
 
